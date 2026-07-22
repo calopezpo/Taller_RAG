@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # RAG Personal con Ollama, LlamaIndex y Qdrant
 
 Proyecto pedagógico y profesional para construir un asistente local que responda preguntas sobre Kevin a partir de documentos autorizados, principalmente su hoja de vida y certificaciones en PDF.
@@ -500,3 +501,6 @@ Consulte `docs/EJERCICIOS.md`.
 ## 31. Licencia
 
 Código bajo licencia MIT. Revise por separado las licencias de los modelos y de los documentos indexados.
+=======
+# Taller_RAG
+>>>>>>> c85be79024fb452926c00ede112ad37299202134
