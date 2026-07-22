@@ -1,13 +1,10 @@
 {
-<<<<<<< HEAD
-    "python-envs.pythonProjects": [
+"python-envs.pythonProjects": [
         {
             "path": ".",
             "envManager": "ms-python.python:system",
             "packageManager": "ms-python.python:pip"
         }
-    ]
-=======
+    ],
     "liveServer.settings.port": 5501
->>>>>>> c85be79024fb452926c00ede112ad37299202134
 }
