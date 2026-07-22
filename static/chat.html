@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Personal — Carlos</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --accent: #38bdf8;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --user-bubble: #38bdf8;
+    --bot-bubble: #334155;
+    --error: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    padding: 1rem 1.5rem;
+    background: var(--panel);
+    border-bottom: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  header h1 { font-size: 1.1rem; margin: 0; }
+  .header-right { display: flex; align-items: center; gap: 0.75rem; }
+  #username { color: var(--muted); font-size: 0.85rem; }
+  select {
+    background: #0f172a;
+    color: var(--text);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+  }
+  #logoutBtn {
+    background: transparent;
+    border: 1px solid #334155;
+    color: var(--muted);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  #logoutBtn:hover { border-color: var(--error); color: var(--error); }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .msg {
+    max-width: 75%;
+    padding: 0.7rem 1rem;
+    border-radius: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  .user {
+    align-self: flex-end;
+    background: var(--user-bubble);
+    color: #04202f;
+    border-bottom-right-radius: 4px;
+  }
+  .bot {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border-bottom-left-radius: 4px;
+  }
+  .error { background: var(--error); color: #350a0a; }
+  .loading { color: var(--muted); font-style: italic; }
+  .lang-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+  form {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--panel);
+    border-top: 1px solid #334155;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: var(--text);
+    font-size: 1rem;
+  }
+  button[type="submit"] {
+    padding: 0.8rem 1.4rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #04202f;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 RAG Personal — Asistente de Carlos</h1>
+  <div class="header-right">
+    <label>
+      Rol:
+      <select id="role">
+        <option value="5" selected>Público general</option>
+      </select>
+    </label>
+    <span id="username"></span>
+    <button id="logoutBtn" type="button">Salir</button>
+  </div>
+</header>
+
+<div id="chat"></div>
+
+<form id="form">
+  <input id="question" type="text" placeholder="Escribe tu pregunta..." autocomplete="off" required>
+  <button id="send" type="submit">Enviar</button>
+</form>
+
+<script>
+  const API_URL = ""; // vacío porque el HTML se sirve desde la misma API (http://localhost:8000)
+  const chatBox = document.getElementById("chat");
+  const form = document.getElementById("form");
+  const input = document.getElementById("question");
+  const roleSelect = document.getElementById("role");
+  const sendBtn = document.getElementById("send");
+  const usernameSpan = document.getElementById("username");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  // --- Autenticación ---
+  const token = localStorage.getItem("rag_token");
+  const username = localStorage.getItem("rag_username");
+
+  if (!token) {
+    window.location.href = "/index.html";
+  }
+  usernameSpan.textContent = "👤 " + (username || "");
+
+  function authHeaders(extra = {}) {
+    return { "Authorization": "Bearer " + token, ...extra };
+  }
+
+  async function handleAuthError(res) {
+    if (res.status === 401) {
+      localStorage.removeItem("rag_token");
+      localStorage.removeItem("rag_username");
+      window.location.href = "/index.html";
+      return true;
+    }
+    return false;
+  }
+
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await fetch(`${API_URL}/logout`, { method: "POST", headers: authHeaders() });
+    } catch (err) {
+      // igual limpiamos la sesión local aunque falle la llamada
+    }
+    localStorage.removeItem("rag_token");
+    localStorage.removeItem("rag_username");
+    window.location.href = "/index.html";
+  });
+
+  // Mapeo de números a nombres legibles (ajusta si el orden no coincide con tu roles.py)
+  const ROLE_LABELS = {
+    "1": "Reclutador",
+    "2": "Colega profesional",
+    "3": "Estudiante",
+    "4": "Cliente",
+    "5": "Público general"
+  };
+
+  function addMessage(text, cls, lang) {
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.textContent = text;
+    if (lang) {
+      const tag = document.createElement("div");
+      tag.className = "lang-tag";
+      tag.textContent = lang === "en" ? "🌐 EN" : "🌐 ES";
+      div.appendChild(tag);
+    }
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
+  }
+
+  // Carga los roles reales desde la API al iniciar la página
+  async function loadRoles() {
+    try {
+      const res = await fetch(`${API_URL}/roles`, { headers: authHeaders() });
+      if (await handleAuthError(res)) return;
+      const data = await res.json();
+      roleSelect.innerHTML = "";
+      data.roles.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = ROLE_LABELS[r] || r;
+        roleSelect.appendChild(opt);
+      });
+    } catch (err) {
+      addMessage("⚠️ No se pudieron cargar los roles. ¿Está corriendo la API?", "bot error");
+    }
+  }
+  loadRoles();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const question = input.value.trim();
+    if (!question) return;
+
+    addMessage(question, "user");
+    input.value = "";
+    sendBtn.disabled = true;
+
+    const loadingMsg = addMessage("Pensando...", "bot loading");
+
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ question, role: roleSelect.value })
+      });
+
+      const data = await res.json();
+      loadingMsg.remove();
+
+      if (await handleAuthError(res)) return;
+
+      if (!res.ok) {
+        addMessage("⚠️ " + (data.detail || "Ocurrió un error."), "bot error");
+      } else {
+        addMessage(data.answer, "bot", data.language);
+      }
+    } catch (err) {
+      loadingMsg.remove();
+      addMessage("⚠️ No se pudo conectar con el servidor. ¿Está corriendo la API?", "bot error");
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+</script>
+
+</body>
+</html>

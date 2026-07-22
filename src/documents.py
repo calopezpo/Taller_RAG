@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import Document, SimpleDirectoryReader
 
 from .config import AppConfig
 from .privacy import redact_sensitive_text
@@ -103,8 +103,9 @@ def load_documents(config: AppConfig):
 
     cleaned = []
     for document in documents:
-        document.text = clean_text(document.text or "")
-        if document.text:
+        cleaned_text = clean_text(document.text or "")
+        if cleaned_text:
+            document.set_content(cleaned_text)
             cleaned.append(document)
 
     if not cleaned:

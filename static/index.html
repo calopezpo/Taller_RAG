@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Personal — Iniciar sesión</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --accent: #38bdf8;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --error: #f87171;
+    --success: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 0.3rem; text-align: center; }
+  p.subtitle { color: var(--muted); text-align: center; margin: 0 0 1.8rem; font-size: 0.9rem; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
+  input, select {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  button {
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #04202f;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg {
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .error { background: rgba(248, 113, 113, 0.15); border: 1px solid var(--error); color: var(--error); }
+  .success { background: rgba(74, 222, 128, 0.15); border: 1px solid var(--success); color: var(--success); }
+  .switch {
+    text-align: center;
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .switch a {
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .switch a:hover { text-decoration: underline; }
+  #registerForm { display: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1 id="cardTitle">🤖 RAG Personal</h1>
+  <p class="subtitle" id="cardSubtitle">Ingresa tus credenciales para continuar</p>
+
+  <div id="msgBox" class="msg"></div>
+
+  <!-- Formulario de LOGIN -->
+  <form id="loginForm">
+    <label for="loginUsername">Usuario</label>
+    <input id="loginUsername" type="text" autocomplete="username" required>
+
+    <label for="loginPassword">Contraseña</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" required>
+
+    <button id="loginBtn" type="submit">Entrar</button>
+  </form>
+
+  <!-- Formulario de REGISTRO -->
+  <form id="registerForm">
+    <label for="regUsername">Usuario</label>
+    <input id="regUsername" type="text" autocomplete="username" required minlength="3">
+
+    <label for="regPassword">Contraseña</label>
+    <input id="regPassword" type="password" autocomplete="new-password" required minlength="6">
+
+    <label for="regPasswordConfirm">Confirmar contraseña</label>
+    <input id="regPasswordConfirm" type="password" autocomplete="new-password" required minlength="6">
+
+    <label for="regRole">Tipo de cuenta</label>
+    <select id="regRole"></select>
+
+    <button id="registerBtn" type="submit">Crear cuenta</button>
+  </form>
+
+  <p class="switch">
+    <span id="toRegister">¿No tienes cuenta? <a onclick="showRegister()">Crear cuenta</a></span>
+    <span id="toLogin" style="display:none;">¿Ya tienes cuenta? <a onclick="showLogin()">Iniciar sesión</a></span>
+  </p>
+</div>
+
+<script>
+  const cardTitle = document.getElementById("cardTitle");
+  const cardSubtitle = document.getElementById("cardSubtitle");
+  const msgBox = document.getElementById("msgBox");
+
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const toRegister = document.getElementById("toRegister");
+  const toLogin = document.getElementById("toLogin");
+  const regRoleSelect = document.getElementById("regRole");
+
+  // Si ya hay una sesión guardada, saltar directo al chat
+  if (localStorage.getItem("rag_token")) {
+    window.location.href = "/chat.html";
+  }
+
+  function showMsg(text, type) {
+    msgBox.textContent = text;
+    msgBox.className = "msg " + type;
+    msgBox.style.display = "block";
+  }
+
+  function hideMsg() {
+    msgBox.style.display = "none";
+  }
+
+  function showRegister() {
+    loginForm.style.display = "none";
+    registerForm.style.display = "block";
+    toRegister.style.display = "none";
+    toLogin.style.display = "inline";
+    cardTitle.textContent = "🤖 Crear cuenta";
+    cardSubtitle.textContent = "Regístrate para acceder al asistente";
+    hideMsg();
+  }
+
+  function showLogin() {
+    registerForm.style.display = "none";
+    loginForm.style.display = "block";
+    toLogin.style.display = "none";
+    toRegister.style.display = "inline";
+    cardTitle.textContent = "🤖 RAG Personal";
+    cardSubtitle.textContent = "Ingresa tus credenciales para continuar";
+    hideMsg();
+  }
+
+  // Carga los tipos de cuenta disponibles para el registro
+  async function loadAccountRoles() {
+    try {
+      const res = await fetch("/account-roles");
+      const data = await res.json();
+      regRoleSelect.innerHTML = "";
+      data.roles.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+        if (r === "general") opt.selected = true;
+        regRoleSelect.appendChild(opt);
+      });
+    } catch (err) {
+      // si falla, se deja el select vacío; el backend igual usa "general" por defecto
+    }
+  }
+  loadAccountRoles();
+
+  // --- LOGIN ---
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideMsg();
+    const btn = document.getElementById("loginBtn");
+    btn.disabled = true;
+    btn.textContent = "Entrando...";
+
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(data.detail || "No se pudo iniciar sesión.", "error");
+        return;
+      }
+
+      localStorage.setItem("rag_token", data.token);
+      localStorage.setItem("rag_username", data.username);
+      window.location.href = "/chat.html";
+
+    } catch (err) {
+      showMsg("No se pudo conectar con el servidor. ¿Está corriendo la API?", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Entrar";
+    }
+  });
+
+  // --- REGISTRO ---
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideMsg();
+
+    const username = document.getElementById("regUsername").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const passwordConfirm = document.getElementById("regPasswordConfirm").value;
+    const role = regRoleSelect.value || "general";
+
+    if (password !== passwordConfirm) {
+      showMsg("Las contraseñas no coinciden.", "error");
+      return;
+    }
+
+    const btn = document.getElementById("registerBtn");
+    btn.disabled = true;
+    btn.textContent = "Creando cuenta...";
+
+    try {
+      const res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, role })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(data.detail || "No se pudo crear la cuenta.", "error");
+        return;
+      }
+
+      showMsg("✅ Cuenta creada. Ahora puedes iniciar sesión.", "success");
+      registerForm.reset();
+      setTimeout(showLogin, 1200);
+
+    } catch (err) {
+      showMsg("No se pudo conectar con el servidor. ¿Está corriendo la API?", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Crear cuenta";
+    }
+  });
+</script>
+
+</body>
+</html>
