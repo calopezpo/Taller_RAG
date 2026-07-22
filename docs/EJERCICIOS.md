@@ -18,9 +18,9 @@ Al dibujarlo noté que la limpieza y redacción de datos sensibles ocurre antes 
 3. Cambie `CHUNK_SIZE` y compare resultados.
 El valor por defecto es CHUNK_SIZE = 600 con CHUNK_OVERLAP = 80. Bajé el valor a 300 y lo subí a 900 para volver a correr la ingestión sobre mi hoja de vida: con chunks pequeños esperaba respuestas más precisas pero con riesgo de perder contexto, y con chunks grandes más contexto por fragmento pero con más ruido irrelevante.
 CHUNK_SIZE	Nº de chunks	Observación
-300	            [ ]	            [ ]
-600 (default)	[ ]	            [ ]
-900	            [ ]	            [ ]
+300	            [5]	            [ ]
+600 (default)	[5]	            [ ]
+900	            [5]	            [ ]
 
 
 
